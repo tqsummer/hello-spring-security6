@@ -1,0 +1,33 @@
+server:
+  port: 8901
+
+spring:
+  application:
+    name: hello-spring-security-oauth2
+  datasource:
+    url: jdbc:mysql://192.168.31.3:20041/oauth2_db01  # 替换为你的数据库名称
+    username: mysql  # 替换为你的数据库用户名
+    password: 12345678  # 替换为你的数据库密码
+    driver-class-name: com.mysql.cj.jdbc.Driver  # 使用 MySQL 8.x 驱动
+  jpa:
+    hibernate:
+      ddl-auto: update  # 自动更新数据库模式（也可以是 create、validate、none）
+    show-sql: true  # 是否显示 SQL 语句
+    properties:
+      hibernate:
+        format_sql: true  # 格式化 SQL 语句输出
+  # 配置 HikariCP 数据源连接池
+  hikari:
+    pool-name: MyHikariCP
+    maximum-pool-size: 10
+    minimum-idle: 5
+    connection-timeout: 20000
+    idle-timeout: 30000
+    max-lifetime: 1800000
+logging:
+  level:
+    org:
+      springframework:
+        security:
+          oauth2: DEBUG
+
