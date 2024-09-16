@@ -83,7 +83,7 @@ public class SecurityConfig {
                 .sessionManagement(session -> session.sessionFixation().migrateSession())
                 .logout(Customizer.withDefaults());
 
-        http.csrf(AbstractHttpConfigurer::disable);
+       // http.csrf(AbstractHttpConfigurer::disable);
 
         return http.build();
     }

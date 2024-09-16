@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Login</title>
+</head>
+<body>
+<h2>登录页面</h2>
+<form th:action="@{/login}" method="post">
+    <div>
+        <label for="username">用户名:</label>
+        <input type="text" id="username" name="username" required>
+    </div>
+    <div>
+        <label for="password">密码:</label>
+        <input type="password" id="password" name="password" required>
+    </div>
+    <!-- 正确使用 Thymeleaf 处理 CSRF 令牌 -->
+    <!--<input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>-->
+    <div>
+        <button type="submit">提交</button>
+    </div>
+    <!-- 显示错误消息 -->
+    <div th:if="${param.error}">
+        <p style="color: red;">用户名或密码错误</p>
+    </div>
+</form>
+</body>
+</html>
