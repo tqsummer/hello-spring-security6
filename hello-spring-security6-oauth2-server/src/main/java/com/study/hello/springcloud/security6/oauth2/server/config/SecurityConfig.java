@@ -12,6 +12,7 @@ import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.security.config.Customizer;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
+import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.oauth2.jwt.JwtDecoder;
@@ -50,7 +51,7 @@ public class SecurityConfig {
                 //将需要认证的请求，重定向到login页面行登录认证。
                 .exceptionHandling((exceptions) -> exceptions
                         .defaultAuthenticationEntryPointFor(
-                                new LoginUrlAuthenticationEntryPoint("/login"),
+                                new LoginUrlAuthenticationEntryPoint("/login.html"),
                                 new MediaTypeRequestMatcher(MediaType.TEXT_HTML)
                         )
                 )
@@ -74,10 +75,15 @@ public class SecurityConfig {
                         .anyRequest().authenticated()
                 )
                 // 由Spring Security过滤链中UsernamePasswordAuthenticationFilter过滤器拦截处理“login”页面提交的登录信息。
-                .formLogin(Customizer.withDefaults())
+                .formLogin(formLogin -> formLogin
+                        .loginPage("/login.html")
+                        .loginProcessingUrl("/login")
+                        .permitAll())
                 // 默认配置即可使用 Redis 管理会话
                 .sessionManagement(session -> session.sessionFixation().migrateSession())
                 .logout(Customizer.withDefaults());
+
+        http.csrf(AbstractHttpConfigurer::disable);
 
         return http.build();
     }
