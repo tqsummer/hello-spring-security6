@@ -24,6 +24,11 @@ spring:
     connection-timeout: 20000
     idle-timeout: 30000
     max-lifetime: 1800000
+  data:
+    redis:
+      host: 192.168.31.3
+      port: 6379
+      database: 0
 jwt:
   rsa:
     public-key: MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEApowXG4ADYqm9A/IqANSBJ74A64+dUtaofyqqCxhlxuJkZtzH0Q5PIlkVvvB30LIvTTOnTPrdBV2g+T/2IfFVKSWi17K3dEyrIKSZoHNRz/Ba3kIA1daKxY3A4AnXZ+rcks74G2AMWyN/3E7Q07+eYfR9kcdjX/Qn+j79977zOfOWE/5ZVm9rKurTke+AVAHbPoIejY9SNKb/Ae9EHElsKyr5sfLJtc8bzeRjRUG9CDN0g5zfMEcsPPT1JubnmSI8YlN5osaB7Y3mL3B5JT8hlXBI0d9chmbv7abjtZ1D9YJvHvSdogIv8WUo51Wb4Ba+YWiyc4ej00PfOhuA3EEYRQIDAQAB

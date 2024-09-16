@@ -75,6 +75,8 @@ public class SecurityConfig {
                 )
                 // 由Spring Security过滤链中UsernamePasswordAuthenticationFilter过滤器拦截处理“login”页面提交的登录信息。
                 .formLogin(Customizer.withDefaults())
+                // 默认配置即可使用 Redis 管理会话
+                .sessionManagement(session -> session.sessionFixation().migrateSession())
                 .logout(Customizer.withDefaults());
 
         return http.build();
