@@ -1,56 +1,112 @@
 package com.study.hello.springcloud.security6.oauth2.config;
 
-import com.study.hello.springcloud.security6.oauth2.framework.security.CustomAccessDeniedHandler;
-import com.study.hello.springcloud.security6.oauth2.framework.security.CustomAuthenticationEntryPoint;
+import com.nimbusds.jose.jwk.RSAKey;
+import com.nimbusds.jose.jwk.source.ImmutableJWKSet;
+import com.nimbusds.jose.jwk.source.JWKSource;
+import com.nimbusds.jose.proc.SecurityContext;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.security.authentication.AuthenticationManager;
-import org.springframework.security.config.annotation.authentication.builders.AuthenticationManagerBuilder;
+import org.springframework.core.annotation.Order;
+import org.springframework.http.MediaType;
+import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.security.config.Customizer;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
-import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
-import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.security.oauth2.jwt.JwtDecoder;
+import org.springframework.security.oauth2.server.authorization.JdbcOAuth2AuthorizationConsentService;
+import org.springframework.security.oauth2.server.authorization.JdbcOAuth2AuthorizationService;
+import org.springframework.security.oauth2.server.authorization.OAuth2AuthorizationConsentService;
+import org.springframework.security.oauth2.server.authorization.OAuth2AuthorizationService;
+import org.springframework.security.oauth2.server.authorization.client.JdbcRegisteredClientRepository;
+import org.springframework.security.oauth2.server.authorization.client.RegisteredClientRepository;
+import org.springframework.security.oauth2.server.authorization.config.annotation.web.configuration.OAuth2AuthorizationServerConfiguration;
+import org.springframework.security.oauth2.server.authorization.config.annotation.web.configurers.OAuth2AuthorizationServerConfigurer;
+import org.springframework.security.oauth2.server.authorization.settings.AuthorizationServerSettings;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.security.web.authentication.LoginUrlAuthenticationEntryPoint;
+import org.springframework.security.web.util.matcher.MediaTypeRequestMatcher;
+
+import java.security.PrivateKey;
+import java.security.PublicKey;
+import java.security.interfaces.RSAPrivateKey;
+import java.security.interfaces.RSAPublicKey;
+import java.util.UUID;
 
 @Configuration
 @EnableWebSecurity
 public class SecurityConfig {
 
-    private final UserDetailsService userDetailsService;
+    @Bean
+    @Order(1)
+    public SecurityFilterChain authorizationServerSecurityFilterChain(HttpSecurity http)
+            throws Exception {
+        OAuth2AuthorizationServerConfiguration.applyDefaultSecurity(http);
+        http.getConfigurer(OAuth2AuthorizationServerConfigurer.class)
+                //开启OpenID Connect 1.0（其中oidc为OpenID Connect的缩写）。
+                .oidc(Customizer.withDefaults());
+        http
+                //将需要认证的请求，重定向到login页面行登录认证。
+                .exceptionHandling((exceptions) -> exceptions
+                        .defaultAuthenticationEntryPointFor(
+                                new LoginUrlAuthenticationEntryPoint("/login"),
+                                new MediaTypeRequestMatcher(MediaType.TEXT_HTML)
+                        )
+                )
+                // 使用jwt处理接收到的access token
+                .oauth2ResourceServer((resourceServer) -> resourceServer
+                        .jwt(Customizer.withDefaults()));
 
-    public SecurityConfig(UserDetailsService userDetailsService) {
-        this.userDetailsService = userDetailsService;
+        return http.build();
     }
 
+    /**
+     * Spring Security 过滤链配置（此处是纯Spring Security相关配置）
+     */
     @Bean
-    public SecurityFilterChain defaultSecurityFilterChain(HttpSecurity http) throws Exception {
+    @Order(2)
+    public SecurityFilterChain defaultSecurityFilterChain(HttpSecurity http)
+            throws Exception {
         http
-                .csrf(AbstractHttpConfigurer::disable).
-                formLogin(form -> form
-                        //.loginPage("/login") // 设置自定义登录页面:可以指定前端地址（全路径带http或https），也可以指向controller地址
-                        .loginProcessingUrl("/login")
-                        .defaultSuccessUrl("/home", true) // 登录成功后的跳转路径
-                        .failureUrl("/login?error=true") // 登录失败后的跳转路径
-                        .permitAll()
+                //设置所有请求都需要认证，未认证的请求都被重定向到login页面进行登录
+                .authorizeHttpRequests((authorize) -> authorize
+                        .anyRequest().authenticated()
                 )
-                .logout(logout -> logout
-                        .logoutUrl("/logout") // 设置注销路径
-                        .logoutSuccessUrl("/login?logout=true") // 注销成功后的跳转路径
-                        .permitAll()
-                )
-                .authorizeHttpRequests(authorizeRequests ->
-                        authorizeRequests
-                                .requestMatchers("/error", "/oauth2/**", "/.well-known/jwks.json").permitAll()
-                                .anyRequest().authenticated()
-                )
-                .exceptionHandling((exceptionHandling) ->
-                        exceptionHandling
-                                .authenticationEntryPoint(new CustomAuthenticationEntryPoint())
-                                .accessDeniedHandler(new CustomAccessDeniedHandler())
-                );
+                // 由Spring Security过滤链中UsernamePasswordAuthenticationFilter过滤器拦截处理“login”页面提交的登录信息。
+                .formLogin(Customizer.withDefaults())
+                .logout(Customizer.withDefaults());
+
         return http.build();
+    }
+
+
+    /**
+     * 客户端信息
+     * 对应表：oauth2_registered_client
+     */
+    @Bean
+    public RegisteredClientRepository registeredClientRepository(JdbcTemplate jdbcTemplate) {
+        return new JdbcRegisteredClientRepository(jdbcTemplate);
+    }
+
+
+    /**
+     * 授权信息
+     * 对应表：oauth2_authorization
+     */
+    @Bean
+    public OAuth2AuthorizationService authorizationService(JdbcTemplate jdbcTemplate, RegisteredClientRepository registeredClientRepository) {
+        return new JdbcOAuth2AuthorizationService(jdbcTemplate, registeredClientRepository);
+    }
+
+    /**
+     * 授权确认
+     * 对应表：oauth2_authorization_consent
+     */
+    @Bean
+    public OAuth2AuthorizationConsentService authorizationConsentService(JdbcTemplate jdbcTemplate, RegisteredClientRepository registeredClientRepository) {
+        return new JdbcOAuth2AuthorizationConsentService(jdbcTemplate, registeredClientRepository);
     }
 
     @Bean
@@ -58,11 +114,37 @@ public class SecurityConfig {
         return new BCryptPasswordEncoder();
     }
 
+
+    /**
+     * 配置 JWK，为JWT(id_token)提供加密密钥，用于加密/解密或签名/验签
+     * JWK详细见：https://datatracker.ietf.org/doc/html/draft-ietf-jose-json-web-key-41
+     */
     @Bean
-    public AuthenticationManager authenticationManager(HttpSecurity http) throws Exception {
-        // 使用 AuthenticationManagerBuilder 显式配置 UserDetailsService 和 PasswordEncoder
-        AuthenticationManagerBuilder auth = http.getSharedObject(AuthenticationManagerBuilder.class);
-        auth.userDetailsService(userDetailsService).passwordEncoder(passwordEncoder());
-        return auth.build();
+    public JWKSource<SecurityContext> jwkSource(PublicKey publicKey, PrivateKey privateKey) {
+        // 创建RSAKey对象
+        RSAKey rsaKey = new RSAKey.Builder((RSAPublicKey) publicKey)
+                .privateKey((RSAPrivateKey) privateKey)
+                .keyID(UUID.randomUUID().toString())  // 设置keyID
+                .build();
+        // 创建JWKSource
+        return new ImmutableJWKSet<>(new com.nimbusds.jose.jwk.JWKSet(rsaKey));
     }
+
+    /**
+     * 配置jwt解析器
+     */
+    @Bean
+    public JwtDecoder jwtDecoder(JWKSource<SecurityContext> jwkSource) {
+        return OAuth2AuthorizationServerConfiguration.jwtDecoder(jwkSource);
+    }
+
+    /**
+     * 配置认证服务器请求地址
+     */
+    @Bean
+    public AuthorizationServerSettings authorizationServerSettings() {
+        //什么都不配置，则使用默认地址
+        return AuthorizationServerSettings.builder().build();
+    }
+
 }
