@@ -13,4 +13,9 @@ public class LoginController {
         return "login"; // 确保返回的视图名与 Thymeleaf 模板匹配
     }
 
+    @GetMapping("/logout.html")
+    public String logoutPage() {
+        return "logout";
+    }
+
 }

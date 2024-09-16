@@ -81,9 +81,16 @@ public class SecurityConfig {
                         .permitAll())
                 // 默认配置即可使用 Redis 管理会话
                 .sessionManagement(session -> session.sessionFixation().migrateSession())
-                .logout(Customizer.withDefaults());
+                .logout(logout -> logout
+                        .logoutUrl("/logout")
+                        .logoutSuccessUrl("/login.html")
+                        //.logoutSuccessHandler() // 自定义登出成功处理器->可处理登出后跳转地址
+                        .permitAll());
 
-       // http.csrf(AbstractHttpConfigurer::disable);
+        // http.csrf(AbstractHttpConfigurer::disable);
+//        http.csrf(csrf -> csrf
+//                .ignoringRequestMatchers("/logout") // 解除 /logout 的 CSRF 保护
+//        );
 
         return http.build();
     }
