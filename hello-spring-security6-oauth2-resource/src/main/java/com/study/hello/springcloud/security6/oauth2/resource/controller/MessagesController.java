@@ -22,4 +22,15 @@ public class MessagesController {
     public String getMessages3() {
         return " hello Message 3";
     }
+
+    /**
+     * 自定义附加权限
+     *
+     * @return
+     */
+    @GetMapping("/messages4")
+    @PreAuthorize("hasAuthority('ROLE_customer')")
+    public String getMessages4() {
+        return " hello Message 4 customer";
+    }
 }

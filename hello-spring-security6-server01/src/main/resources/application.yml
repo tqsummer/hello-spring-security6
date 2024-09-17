@@ -3,10 +3,4 @@ server:
 
 spring:
   application:
-    name: hello-spring-security
-  security:
-    user:
-      name: user
-      password: 123456
-      roles:
-        - admin
+    name: hello-spring-security6
