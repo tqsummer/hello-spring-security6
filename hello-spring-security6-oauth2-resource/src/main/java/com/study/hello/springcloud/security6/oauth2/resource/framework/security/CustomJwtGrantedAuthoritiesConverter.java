@@ -1,4 +1,4 @@
-package com.study.hello.springcloud.security6.oauth2.resource.config;
+package com.study.hello.springcloud.security6.oauth2.resource.framework.security;
 
 import org.springframework.core.convert.converter.Converter;
 import org.springframework.security.core.GrantedAuthority;

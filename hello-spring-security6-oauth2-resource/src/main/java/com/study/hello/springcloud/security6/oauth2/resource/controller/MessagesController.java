@@ -12,13 +12,13 @@ public class MessagesController {
     }
 
     @GetMapping("/messages2")
-    @PreAuthorize("hasAuthority('SCOPE_profile')")
+    // @PreAuthorize("hasAuthority('SCOPE_profile')")
     public String getMessages2() {
         return " hello Message 2";
     }
 
     @GetMapping("/messages3")
-    @PreAuthorize("hasAuthority('SCOPE_Message')")
+    // @PreAuthorize("hasAuthority('SCOPE_Message')")
     public String getMessages3() {
         return " hello Message 3";
     }
@@ -29,7 +29,7 @@ public class MessagesController {
      * @return
      */
     @GetMapping("/messages4")
-    @PreAuthorize("hasAuthority('ROLE_customer')")
+    // @PreAuthorize("hasAuthority('ROLE_customer')")
     public String getMessages4() {
         return " hello Message 4 customer";
     }

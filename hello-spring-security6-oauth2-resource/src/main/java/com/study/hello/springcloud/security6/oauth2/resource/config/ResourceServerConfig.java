@@ -1,5 +1,8 @@
 package com.study.hello.springcloud.security6.oauth2.resource.config;
 
+import com.study.hello.springcloud.security6.oauth2.resource.framework.security.CustomAccessDeniedHandler;
+import com.study.hello.springcloud.security6.oauth2.resource.framework.security.CustomAuthenticationEntryPoint;
+import com.study.hello.springcloud.security6.oauth2.resource.framework.security.CustomJwtGrantedAuthoritiesConverter;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
@@ -14,28 +17,33 @@ import org.springframework.security.web.SecurityFilterChain;
 public class ResourceServerConfig {
 
     private final CustomJwtGrantedAuthoritiesConverter customJwtGrantedAuthoritiesConverter;
+    private final CustomAccessDeniedHandler customAccessDeniedHandler;
+    private final CustomAuthenticationEntryPoint customAuthenticationEntryPoint;
 
-    public ResourceServerConfig(CustomJwtGrantedAuthoritiesConverter customJwtGrantedAuthoritiesConverter) {
+    public ResourceServerConfig(CustomJwtGrantedAuthoritiesConverter customJwtGrantedAuthoritiesConverter,
+                                CustomAccessDeniedHandler customAccessDeniedHandler,
+                                CustomAuthenticationEntryPoint customAuthenticationEntryPoint) {
         this.customJwtGrantedAuthoritiesConverter = customJwtGrantedAuthoritiesConverter;
+        this.customAccessDeniedHandler = customAccessDeniedHandler;
+        this.customAuthenticationEntryPoint = customAuthenticationEntryPoint;
     }
 
     @Bean
     SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         JwtAuthenticationConverter jwtAuthenticationConverter = new JwtAuthenticationConverter();
         jwtAuthenticationConverter.setJwtGrantedAuthoritiesConverter(customJwtGrantedAuthoritiesConverter);
-        
-        http.authorizeHttpRequests((authorizeHttpRequests) -> authorizeHttpRequests
-                        //所有的访问都需要通过身份认证
-                        .anyRequest().authenticated()
-                )
-//                .oauth2ResourceServer((oauth2ResourceServer) -> oauth2ResourceServer
-//                        .jwt(Customizer.withDefaults())
-//
-//                );
 
-                .oauth2ResourceServer(oauth2ResourceServer -> oauth2ResourceServer
-                        .jwt(jwt -> jwt.jwtAuthenticationConverter(jwtAuthenticationConverter))
-                );
+        http
+                // 所有的访问都需要通过身份认证
+                .authorizeHttpRequests(authorize -> authorize
+                        .anyRequest().authenticated())
+                // 配置资源服务器
+                .oauth2ResourceServer(oauth2 -> oauth2
+                        .jwt(jwt -> jwt.jwtAuthenticationConverter(jwtAuthenticationConverter)))
+
+                .exceptionHandling(exceptionHandling -> exceptionHandling
+                        .authenticationEntryPoint(customAuthenticationEntryPoint)
+                        .accessDeniedHandler(customAccessDeniedHandler));
 
         return http.build();
     }
