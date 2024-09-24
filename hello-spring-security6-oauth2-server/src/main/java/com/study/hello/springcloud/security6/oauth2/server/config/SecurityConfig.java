@@ -4,6 +4,7 @@ import com.nimbusds.jose.jwk.RSAKey;
 import com.nimbusds.jose.jwk.source.ImmutableJWKSet;
 import com.nimbusds.jose.jwk.source.JWKSource;
 import com.nimbusds.jose.proc.SecurityContext;
+import com.study.hello.springcloud.security6.oauth2.server.framework.security.CustomTokenCustomizer;
 import com.study.hello.springcloud.security6.oauth2.server.framework.security.customize.PasswordLikeAuthenticationConverter;
 import com.study.hello.springcloud.security6.oauth2.server.framework.security.customize.PasswordLikeAuthenticationProvider;
 import org.springframework.context.annotation.Bean;
@@ -147,9 +148,11 @@ public class SecurityConfig {
     }
 
     @Bean
-    public OAuth2TokenGenerator<OAuth2Token> tokenGenerator(JWKSource<SecurityContext> jwkSource) {
+    public OAuth2TokenGenerator<OAuth2Token> tokenGenerator(JWKSource<SecurityContext> jwkSource, CustomTokenCustomizer customTokenCustomizer) {
         JwtEncoder jwtEncoder = new NimbusJwtEncoder(jwkSource);
         JwtGenerator jwtGenerator = new JwtGenerator(jwtEncoder);
+        jwtGenerator.setJwtCustomizer(customTokenCustomizer);
+
         OAuth2AccessTokenGenerator accessTokenGenerator = new OAuth2AccessTokenGenerator();
         OAuth2RefreshTokenGenerator refreshTokenGenerator = new OAuth2RefreshTokenGenerator();
         return new DelegatingOAuth2TokenGenerator(
